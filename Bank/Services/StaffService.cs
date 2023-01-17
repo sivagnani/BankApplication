@@ -8,140 +8,96 @@ using System.Threading.Tasks;
 
 namespace BankApplication.Services
 {
-    public class StaffService:UserService
+    public class StaffService
     {
-        public BankService bank;
-        public StaffService(string name, string pass, BankService bank) : base(name, pass,"Staff")
-        {
-            this.bank=bank;
+        public void CreateCustomerAccount(RBIService rbis,string bid,string userName, string password)
+        { 
+                BankService b = new BankService();
+                Account a = new Account(userName,bid);
+                rbis.GetBank(bid).Accounts.Add(a);
+                b.CreateAccount(rbis,bid,userName,password,User.TypesOfUser.Customer.ToString());
         }
-        public bool CreateCustomerAccount(string userName, string password)
+        public bool RemoveCustomerAccount(RBIService rbis,string bid,string userName) 
         {
-            if (bank.CheckUser(userName,"Customer"))
+            BankService b = new BankService();
+            if (!b.CheckUser(rbis,bid,userName,"Customer"))
             {
-                AccountService a = new AccountService(userName,bank.bankModel.bankId);
-                bank.accounts.Add(a);
-                bank.Users.Add(new UserService(userName, password, "Customer"));
-                bank.Customers.Add(new CustomerService(userName, password, a, bank));
-                return true;
-            }
-            return false;
-        }
-        public bool RemoveCustomerAccount(string userName) 
-        {
-            if (!bank.CheckUser(userName,"Customer"))
-            {
-                if (DeleteAccount(userName))
+                if (DeleteAccount(rbis.GetBank(bid),userName))
                 {
-                    bank.RemoveUser(userName, "Customer");
-                    RemoveCustomer(userName);
+                    b.RemoveUser(rbis,bid,userName,User.TypesOfUser.Customer.ToString());
                     return true;
                 }
                 return false;
             }
             return false;
         }
-        public void RemoveCustomer(string userName)
+        public bool DeleteAccount(Bank b,string s)
         {
-            foreach (var i in bank.Customers)
+            foreach (var i in b.Accounts)
             {
-                if (i.userModel.userName == userName)
+                if (i.CustomerName == s)
                 {
-                    bank.Customers.Remove(i);
-                    break;
-                }
-            }
-        }
-        public bool DeleteAccount(string s)
-        {
-            foreach (var i in bank.accounts)
-            {
-                if (i.accountModel.customerName == s)
-                {
-                    bank.accounts.Remove(i);
+                    b.Accounts.Remove(i);
                     return true;
                 }
             }
             return false;
         }
-        public bool UpdateUsername(string o,string n)
+        public void ChangeUserName(RBIService rbis,string bid,string oldName, string newName)
         {
-            if(!bank.CheckUser(o, "Customer"))
+            Bank b = rbis.GetBank(bid);
+            foreach (var i in b.Accounts)
             {
-                ChangeUserName(o,n);
+                if (i.CustomerName == oldName)
+                {
+                    i.CustomerName = newName;
+                }
+            }
+            foreach (var i in b.Users)
+            {
+                if (i.UserName == oldName && i.UserType==User.TypesOfUser.Customer.ToString())
+                {
+                    i.UserName = newName;
+                }
+            }
+        }
+        public bool UpdatePassword(RBIService rbis,string bid,string u,string p)
+        {
+            Bank bank = rbis.GetBank(bid);
+            BankService b = new BankService();
+            if (!b.CheckUser(rbis,bid,u,User.TypesOfUser.Customer.ToString()))
+            {
+                foreach (var i in bank.Users)
+                {
+                    if (i.UserName == u && i.UserType == User.TypesOfUser.Customer.ToString())
+                    {
+                        i.Password = p;
+                    }
+                }
                 return true;
             }
             return false;
         }
-        public void ChangeUserName(string oldName, string newName)
+        public void AddCurrency(RBIService rbis,string bid,string currency,float rate)
         {
-            foreach (var i in bank.accounts)
-            {
-                if (i.accountModel.customerName == oldName)
-                {
-                    i.UpdateAccount(newName);
-                }
-            }
-            foreach (var i in bank.Customers)
-            {
-                if (i.userModel.userName == oldName)
-                {
-                    i.UpdateUserName(newName);
-                }
-            }
-            foreach (var i in bank.Users)
-            {
-                if (i.userModel.userName == oldName && i.userModel.userType == "Customer")
-                {
-                    i.UpdateUserName(newName);
-                }
-            }
+            rbis.GetBank(bid).Currency[currency]=rate;
         }
-        public bool UpdatePassword(string u,string p)
+        public void SetServiceCharges(RBIService rbis,string bid,string serviceCharge,float d)
         {
-            if (!bank.CheckUser(u, "Customer"))
-            {
-                ChangePassword(u, p);
-                return true;
-            }
-            return false;
-        }
-        public void ChangePassword(string user, string pass)
-        {
-            foreach (var i in bank.Customers)
-            {
-                if (i.userModel.userName == user)
-                {
-                    i.UpdatePassword(pass);
-                }
-            }
-            foreach (var i in bank.Users)
-            {
-                if (i.userModel.userName == user && i.userModel.userType == "Customer")
-                {
-                    i.UpdatePassword(pass);
-                }
-            }
-        }
-        public void AddCurrency(string currency,float rate)
-        {
-            bank.bankModel.Currency[currency]=rate;
-        }
-        public void SetServiceCharges(string serviceCharge,float d)
-        {
+            Bank b = rbis.GetBank(bid);
             switch(serviceCharge)
             {
                 case "RTGS":
-                    bank.bankModel.RTGS = d;
+                    b.RTGS = d;
                     break;
                 case "ORTGS":
-                    bank.bankModel.ORTGS = d;
+                    b.ORTGS = d;
                     break;
                 case "IMPS":
-                    bank.bankModel.IMPS = d;
+                    b.IMPS = d;
                     break;
                 case "OIMPS":
-                    bank.bankModel.OIMPS = d;
+                    b.OIMPS = d;
                     break;
             }
         }

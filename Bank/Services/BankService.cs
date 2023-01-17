@@ -12,47 +12,67 @@ namespace BankApplication.Services
 {
     public class BankService
     {
-        public Bank bankModel = new Bank();
-        public List<AccountService> accounts = new List<AccountService>();
-        public List<AdminService> admins = new List<AdminService>();
-        public List<StaffService> staffs = new List<StaffService>();
-        public List<CustomerService> Customers = new List<CustomerService>();
-        public List<UserService> Users = new List<UserService>();
-        public BankService(string s)
+        public string GetBankId(Bank b)
         {
-            bankModel.Name = s;
-            DateTime centuryBegin = new DateTime(2001, 1, 1);
-            long elapsedTicks = DateTime.Now.Second - centuryBegin.Second;
-            bankModel.bankId = s.Substring(0, 3) + elapsedTicks.ToString();
-            bankModel.Currency.Add("INR", 1);
+            return b.BankId;
         }
-        public void RemoveUser(string userName,string userType)
+        public void CreateAccount(RBIService rbis,string bid,string userName, string password,string userType)
         {
-            foreach(var i in Users)
+            rbis.GetBank(bid).Users.Add(new User(userName, password,userType));
+        }
+        public bool ValidateUserLogin(RBIService rbis, string bid, string userId, string password, string userType)
+        {
+            foreach(var a in rbis.GetBank(bid).Users)
             {
-                if(i.userModel.userName ==userName && i.userModel.userType==userType)
+                if(a.UserName==userId && a.UserType==userType)
+                    return true;
+            }
+            return false;
+        }
+        public bool CheckUser(RBIService rbis,string bid, string userName, string userType)
+        {
+            foreach (var i in rbis.GetBank(bid).Users)
+            {
+                if (i.UserName == userName && i.UserName == userType) return true;
+            }
+            return false;
+        }
+        public void RemoveUser(RBIService rbis,string bid,string userName,string userType)
+        {
+            foreach(var i in rbis.GetBank(bid).Users)
+            {
+                if(i.UserName ==userName && i.UserName ==userType)
                 {
-                    Users.Remove(i);
+                    rbis.GetBank(bid).Users.Remove(i);
                     break;
                 }
             }
             
         }
-        public bool CheckUser(string userName,string userType)
+        
+        public bool ValidateAccount(Bank bank,string accountId)
         {
-            foreach (var i in Users)
+            foreach(var a in bank.Accounts)
             {
-                if (i.userModel.userName == userName && i.userModel.userType == userType) return false;
+                if(a.AccountId== accountId) return true;
             }
-            return true;
+            return false;
         }
-        public void SenderUpdate(string senderBankName, string senderAccountID, string reciverBankName, string recieverAccountId, float a)
+        public string GetAccountId(RBIService rbis, string bid, string name)
         {
-
+            foreach(var a in rbis.GetBank(bid).Accounts)
+            {
+                if(a.CustomerName== name) return a.AccountId;
+            }
+            return null;
         }
-        public void RecieverUpdate(string senderBankName, string senderAccountID, string reciverBankName, string recieverAccountId, float a)
+        public Account GetAccount(RBIService rbis,string bid,string accountId)
         {
-
+            foreach (var a in rbis.GetBank(bid).Accounts)
+            {
+                if (a.AccountId == accountId) return a;
+            }
+            return null;
         }
     }
 }

@@ -10,33 +10,16 @@ namespace BankApplication.Services
 {
     public class AccountService
     {
-        public Account accountModel = new Account();
         public List<TransactionService> transactions = new List<TransactionService>();
-        public AccountService(string name, string bankId)
+        public void AddMoney(Account a,float amount)
         {
-            accountModel.customerName = name;
-            accountModel.bankId = bankId;
-            DateTime centuryBegin = new DateTime(2001, 1, 1);
-            long elapsedTicks = DateTime.Now.Second - centuryBegin.Second;
-            accountModel.accountId = name.Substring(0, 3) + elapsedTicks.ToString();
-            accountModel.balance = 0;
+            a.Balance += amount;
         }
-        public void UpdateAccount(string n)
+        public bool CanRemoveMoney(Account a, float amount)
         {
-            accountModel.customerName = n;
-            DateTime centuryBegin = new DateTime(2001, 1, 1);
-            long elapsedTicks = DateTime.Now.Ticks - centuryBegin.Ticks;
-            accountModel.accountId = n.Substring(0, 3) + elapsedTicks.ToString();
-        }
-        public void AddMoney(float amount)
-        {
-            accountModel.balance += amount;
-        }
-        public bool RemoveMoney(float amount)
-        {
-            if (accountModel.balance >= amount)
+            if (a.Balance >= amount)
             {
-                accountModel.balance -= amount;
+                a.Balance -= amount;
                 return true;
             }
             return false;

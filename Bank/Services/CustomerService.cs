@@ -10,48 +10,66 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BankApplication.Services
 {
-    public class CustomerService:UserService
+    public class CustomerService
     {
-        public AccountService account;
-        public BankService bank;
-        public Customer customer = new Customer();
-        public CustomerService(string name, string pass, AccountService account,BankService bank) : base(name, pass,"Customer")
+        public bool DepositeMoney(RBIService rbis,string bid,string aid,int amount,string currency)
         {
-            this.account = account;
-            this.bank = bank;
-        }
-        public bool DepositeMoney(int amount,string currency)
-        {
-            if(bank.bankModel.Currency.ContainsKey(currency))
+            Bank bank = rbis.GetBank(bid);
+            AccountService a = new AccountService();
+            BankService b = new BankService();
+            if(bank.Currency.ContainsKey(currency))
             {
-                float rate = bank.bankModel.Currency[currency];
-                account.AddMoney(amount * rate);
-                string a=account.accountModel.accountId;
-                string b= account.accountModel.bankId;
-                Console.WriteLine(a + " " + b);
-                account.transactions.Add(new TransactionService(a, b, a, b, amount * rate));
+                float rate = bank.Currency[currency];
+                Account acc = b.GetAccount(rbis, bid, aid);
+                a.AddMoney(acc,amount * rate);
+                string transactionId = "TXN"+ DateTime.Now.Microsecond.ToString();
+                acc.Transactions.Add(new TransactionModel(TransactionModel.TypeOfTransaction.Deposit.ToString(), amount * rate,transactionId));
                 return true;
             }
             return false;            
         }
-        public bool WithdrawAmount(int amount)
+        public bool WithdrawAmount(RBIService rbis, string bid,string aid,int amount)
         {
-            if (account.RemoveMoney(amount))
+            AccountService a = new AccountService();
+            BankService b = new BankService();
+            Account acc = b.GetAccount(rbis,bid,aid);
+            if (a.CanRemoveMoney(acc,amount))
             {
-                string a = account.accountModel.accountId;
-                string b = account.accountModel.bankId;
-                account.transactions.Add(new TransactionService(a, b, a, b, amount * (-1)));
+                string transactionId = "TXN" + DateTime.Now.Microsecond.ToString();
+                acc.Transactions.Add(new TransactionModel(TransactionModel.TypeOfTransaction.Withdrawl.ToString(), amount * (-1),transactionId));
                 return true;
             }
             return false;
             
         }
-        public float GetBalance()
+        public float GetBalance(RBIService rbis, string bid,string aid)
         {
-            return account.accountModel.balance;
+            BankService b = new BankService();
+            return b.GetAccount(rbis, bid, aid).Balance;
         }
-        public float CalculateAmount(int amount,int op,string reciverBank)
+        public float CalculateAmount(RBIService rbis, string bid,float amount,int op,string reciverBankId)
         {
+            Bank b = rbis.GetBank(bid);
+            if (b.BankId == reciverBankId)
+            {
+                switch (op)
+                {
+                    case 1:
+                        return amount * (1 - (b.RTGS / 100));
+                    case 2:
+                        return amount * (1 - (b.IMPS / 100));
+                }
+            }
+            else
+            {
+                switch (op)
+                {
+                    case 1:
+                        return amount * (1 - (b.ORTGS / 100));
+                    case 2:
+                        return amount * (1 - (b.OIMPS / 100));
+                }
+            }
             return 0;
         }
     }

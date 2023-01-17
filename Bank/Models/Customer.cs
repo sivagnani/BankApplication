@@ -10,6 +10,9 @@ namespace BankApplication.Models
 {
     public class Customer:User
     {
-        
+        public Customer(string name, string pass) : base(name, pass, "Admin")
+        {
+
+        }
     }
 }

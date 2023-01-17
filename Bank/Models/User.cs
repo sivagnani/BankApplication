@@ -8,9 +8,21 @@ namespace BankApplication.Models
 {
     public class User
     {
-        public string password { get; set; }
-        public string userName { get; set; }
-        public string userType { get; set; }
-        
+        public string Password { get; set; }
+        public string UserName { get; set; }
+        public enum TypesOfUser
+        {
+            Admin,
+            Staff,
+            Customer
+        }
+        public string UserType { get; set; }
+        public User(string userName, string password, string userType)
+        {
+            Password = password;
+            UserName = userName;
+            UserType = userType;
+        }
+
     }
 }

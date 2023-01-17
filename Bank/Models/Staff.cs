@@ -8,6 +8,9 @@ namespace BankApplication.Models
 {
     public class Staff:User
     {
+        public Staff(string name, string pass) : base(name, pass, "Admin")
+        {
 
+        }
     }
 }
