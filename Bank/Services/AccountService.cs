@@ -1,4 +1,5 @@
-﻿using BankApplication.Models;
+﻿using BankApplication.Contracts;
+using BankApplication.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,9 +9,8 @@ using System.Xml.Linq;
 
 namespace BankApplication.Services
 {
-    public class AccountService
+    public class AccountService:IAccountService
     {
-        public List<TransactionService> transactions = new List<TransactionService>();
         public void AddMoney(Account a,float amount)
         {
             a.Balance += amount;
@@ -23,6 +23,15 @@ namespace BankApplication.Services
                 return true;
             }
             return false;
+        }
+        public TransactionModel GetTransaction(Account a,string tid)
+        {
+            foreach(var tx in a.Transactions)
+            {
+                if(tx.TransactionId==tid)
+                    return tx;
+            }
+            return null;
         }
     }
 }

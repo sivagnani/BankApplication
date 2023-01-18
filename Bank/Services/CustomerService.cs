@@ -1,4 +1,5 @@
-﻿using BankApplication.Models;
+﻿using BankApplication.Contracts;
+using BankApplication.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,17 +11,17 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BankApplication.Services
 {
-    public class CustomerService
+    public class CustomerService:ICustomerService
     {
-        public bool DepositeMoney(RBIService rbis,string bid,string aid,int amount,string currency)
+        public bool DepositeMoney(IRBIService rbis,RBI rbi,string bid,string aid,int amount,string currency)
         {
-            Bank bank = rbis.GetBank(bid);
-            AccountService a = new AccountService();
-            BankService b = new BankService();
+            Bank bank = rbis.GetBank(rbi,bid);
+            IAccountService a = new AccountService();
+            IBankService b = new BankService();
             if(bank.Currency.ContainsKey(currency))
             {
                 float rate = bank.Currency[currency];
-                Account acc = b.GetAccount(rbis, bid, aid);
+                Account acc = b.GetAccount(rbis,rbi, bid, aid);
                 a.AddMoney(acc,amount * rate);
                 string transactionId = "TXN"+ DateTime.Now.Microsecond.ToString();
                 acc.Transactions.Add(new TransactionModel(TransactionModel.TypeOfTransaction.Deposit.ToString(), amount * rate,transactionId));
@@ -28,11 +29,11 @@ namespace BankApplication.Services
             }
             return false;            
         }
-        public bool WithdrawAmount(RBIService rbis, string bid,string aid,int amount)
+        public bool WithdrawAmount(IRBIService rbis,RBI rbi, string bid,string aid,int amount)
         {
-            AccountService a = new AccountService();
-            BankService b = new BankService();
-            Account acc = b.GetAccount(rbis,bid,aid);
+            IAccountService a = new AccountService();
+            IBankService b = new BankService();
+            Account acc = b.GetAccount(rbis,rbi,bid,aid);
             if (a.CanRemoveMoney(acc,amount))
             {
                 string transactionId = "TXN" + DateTime.Now.Microsecond.ToString();
@@ -42,14 +43,39 @@ namespace BankApplication.Services
             return false;
             
         }
-        public float GetBalance(RBIService rbis, string bid,string aid)
+        public float GetBalance(IRBIService rbis, RBI rbi, string bid,string aid)
         {
-            BankService b = new BankService();
-            return b.GetAccount(rbis, bid, aid).Balance;
+            IBankService b = new BankService();
+            return b.GetAccount(rbis, rbi,bid, aid).Balance;
         }
-        public float CalculateAmount(RBIService rbis, string bid,float amount,int op,string reciverBankId)
+        public string Transfer(IRBIService rbis, RBI rbi, string senderBankId, string senderAccountId, float senderAmount, string recieverBankId, string recieverAccountId, float reciverAmount)
         {
-            Bank b = rbis.GetBank(bid);
+            Bank senderBank = rbis.GetBank(rbi,senderBankId);
+            Bank recieverBank = rbis.GetBank(rbi,recieverBankId);
+            IBankService b = new BankService();
+            if (b.IsAccountValid(recieverBank, recieverAccountId))
+            {
+                string transactionId = "TXN" + senderBank.BankId + senderAccountId + DateTime.Now.Microsecond.ToString();
+                Account senderAccount = b.GetAccount(rbis,rbi, senderBankId, senderAccountId);
+                Account recieverAccount = b.GetAccount(rbis,rbi, recieverBankId, recieverAccountId);
+                IAccountService a = new AccountService();
+                if (a.CanRemoveMoney(senderAccount, senderAmount))
+                {
+                    senderAccount.Transactions.Add(new TransactionModel(TransactionModel.TypeOfTransaction.Transfer.ToString(), -1 * senderAmount, transactionId, recieverBankId: recieverBankId, recieverAccountId: recieverAccountId));
+                    a.AddMoney(recieverAccount, reciverAmount);
+                    recieverAccount.Transactions.Add(new TransactionModel(TransactionModel.TypeOfTransaction.Transfer.ToString(), reciverAmount, transactionId, senderBankId: senderBankId, senderAccountID: senderAccountId));
+                    return "Tranfer Successful";
+                }
+                else
+                {
+                    return "No Sufficient Balance";
+                }
+            }
+            return "Invalid AccountId";
+        }
+        public float CalculateAmount(IRBIService rbis, RBI rbi, string bid,float amount,int op,string reciverBankId)
+        {
+            Bank b = rbis.GetBank(rbi,bid);
             if (b.BankId == reciverBankId)
             {
                 switch (op)

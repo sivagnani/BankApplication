@@ -17,7 +17,8 @@ namespace BankApplication.Models
         {
             Deposit,
             Withdrawl,
-            Transfer
+            Transfer,
+            Reverted
         }
         public string TransactionType { get; set; }
         public float Amount { get; set; }

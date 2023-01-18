@@ -1,4 +1,5 @@
-﻿using BankApplication.Models;
+﻿using BankApplication.Contracts;
+using BankApplication.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,23 +9,23 @@ using System.Threading.Tasks;
 
 namespace BankApplication.Services
 {
-    public class StaffService
+    public class StaffService: IStaffService
     {
-        public void CreateCustomerAccount(RBIService rbis,string bid,string userName, string password)
+        public void CreateCustomerAccount(IRBIService rbis, RBI rbi, string bid,string userName, string password)
         { 
-                BankService b = new BankService();
+                IBankService b = new BankService();
                 Account a = new Account(userName,bid);
-                rbis.GetBank(bid).Accounts.Add(a);
-                b.CreateAccount(rbis,bid,userName,password,User.TypesOfUser.Customer.ToString());
+                rbis.GetBank(rbi,bid).Accounts.Add(a);
+                b.CreateAccount(rbis,rbi,bid,userName,password,User.TypesOfUser.Customer.ToString());
         }
-        public bool RemoveCustomerAccount(RBIService rbis,string bid,string userName) 
+        public bool RemoveCustomerAccount(IRBIService rbis, RBI rbi, string bid,string userName) 
         {
-            BankService b = new BankService();
-            if (!b.CheckUser(rbis,bid,userName,"Customer"))
+            IBankService b = new BankService();
+            if (!b.CheckUser(rbis,rbi,bid,userName,User.TypesOfUser.Customer.ToString()))
             {
-                if (DeleteAccount(rbis.GetBank(bid),userName))
+                if (DeleteAccount(rbis.GetBank(rbi,bid),userName))
                 {
-                    b.RemoveUser(rbis,bid,userName,User.TypesOfUser.Customer.ToString());
+                    b.RemoveUser(rbis,rbi,bid,userName,User.TypesOfUser.Customer.ToString());
                     return true;
                 }
                 return false;
@@ -43,9 +44,9 @@ namespace BankApplication.Services
             }
             return false;
         }
-        public void ChangeUserName(RBIService rbis,string bid,string oldName, string newName)
+        public void ChangeUserName(IRBIService rbis, RBI rbi, string bid,string oldName, string newName)
         {
-            Bank b = rbis.GetBank(bid);
+            Bank b = rbis.GetBank(rbi,bid);
             foreach (var i in b.Accounts)
             {
                 if (i.CustomerName == oldName)
@@ -61,11 +62,11 @@ namespace BankApplication.Services
                 }
             }
         }
-        public bool UpdatePassword(RBIService rbis,string bid,string u,string p)
+        public bool UpdatePassword(IRBIService rbis, RBI rbi, string bid,string u,string p)
         {
-            Bank bank = rbis.GetBank(bid);
-            BankService b = new BankService();
-            if (!b.CheckUser(rbis,bid,u,User.TypesOfUser.Customer.ToString()))
+            Bank bank = rbis.GetBank(rbi, bid);
+            IBankService b = new BankService();
+            if (b.CheckUser(rbis,rbi,bid,u,User.TypesOfUser.Customer.ToString()))
             {
                 foreach (var i in bank.Users)
                 {
@@ -78,13 +79,13 @@ namespace BankApplication.Services
             }
             return false;
         }
-        public void AddCurrency(RBIService rbis,string bid,string currency,float rate)
+        public void AddCurrency(IRBIService rbis, RBI rbi, string bid,string currency,float rate)
         {
-            rbis.GetBank(bid).Currency[currency]=rate;
+            rbis.GetBank(rbi,bid).Currency[currency]=rate;
         }
-        public void SetServiceCharges(RBIService rbis,string bid,string serviceCharge,float d)
+        public void SetServiceCharges(IRBIService rbis, RBI rbi, string bid, string serviceCharge, float d)
         {
-            Bank b = rbis.GetBank(bid);
+            Bank b = rbis.GetBank(rbi,bid);
             switch(serviceCharge)
             {
                 case "RTGS":
@@ -100,6 +101,32 @@ namespace BankApplication.Services
                     b.OIMPS = d;
                     break;
             }
+        }
+        public void RevertTransaction(IRBIService rbis, RBI rbi, string bid, string aid, string transId)
+        {
+            IBankService bs = new BankService();
+            IAccountService a = new AccountService();
+            Account a1 = bs.GetAccount(rbis,rbi, bid, aid);
+            TransactionModel t = a.GetTransaction(a1, transId);
+            float am;
+            string aid2;
+            string bid2;
+            if (t.Amount < 0)
+            {
+                aid2 = t.RecieverAccountId;
+                bid2 = t.RecieverBankId;
+                am = (-1) * t.Amount;
+            }
+            else
+            {
+                aid2 = t.SenderAccountId;
+                bid2 = t.SenderBankId;
+                am = a.GetTransaction(bs.GetAccount(rbis,rbi, bid2, aid2), transId).Amount;
+            }
+            a.AddMoney(a1,am);
+            a.AddMoney(bs.GetAccount(rbis,rbi, bid2, aid2), (-1)*am);
+            a1.Transactions.Add(new TransactionModel(TransactionModel.TypeOfTransaction.Reverted.ToString(),am, transId));
+            bs.GetAccount(rbis,rbi, bid2, aid2).Transactions.Add(new TransactionModel(TransactionModel.TypeOfTransaction.Reverted.ToString(), -1*am, transId));
         }
     }
 }

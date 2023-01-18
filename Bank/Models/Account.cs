@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BankApplication.Services;
-
-namespace BankApplication.Models
+﻿namespace BankApplication.Models
 {
     public class Account
     {
@@ -17,7 +10,7 @@ namespace BankApplication.Models
         public Account(string name, string bankId)
         {
             CustomerName = name;
-            bankId = bankId;
+            BankId = bankId;
             AccountId = name.Substring(0, 3) + DateTime.Now.Microsecond.ToString();
             Balance = 0;
         }
