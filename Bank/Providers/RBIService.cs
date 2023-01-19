@@ -1,18 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BankApplication.Contracts;
+﻿using BankApplication.Contracts;
 using BankApplication.Models;
 
-namespace BankApplication.Services
+namespace BankApplication.Providers
 {
     public class RBIService:IRBIService
     {
         //public RBI Rbi { get; set; }
         public string CreateBank(RBI rbi,string name)
         {
+            if(name.Length < 3)
+            {
+                throw new InvalidDataException();
+            }
             Bank bank = new Bank(name);
             rbi.Banks.Add(bank);
             return bank.BankId;

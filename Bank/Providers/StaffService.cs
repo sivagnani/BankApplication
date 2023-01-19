@@ -1,13 +1,8 @@
 ﻿using BankApplication.Contracts;
 using BankApplication.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
+using BankApplication.helper;
 
-namespace BankApplication.Services
+namespace BankApplication.Providers
 {
     public class StaffService: IStaffService
     {
@@ -16,16 +11,16 @@ namespace BankApplication.Services
                 IBankService b = new BankService();
                 Account a = new Account(userName,bid);
                 rbis.GetBank(rbi,bid).Accounts.Add(a);
-                b.CreateAccount(rbis,rbi,bid,userName,password,User.TypesOfUser.Customer.ToString());
+                b.CreateAccount(rbis,rbi,bid,userName,password,TypeOfUsers.Customer.ToString());
         }
         public bool RemoveCustomerAccount(IRBIService rbis, RBI rbi, string bid,string userName) 
         {
             IBankService b = new BankService();
-            if (!b.CheckUser(rbis,rbi,bid,userName,User.TypesOfUser.Customer.ToString()))
+            if (!b.CheckUser(rbis,rbi,bid,userName,TypeOfUsers.Customer.ToString()))
             {
                 if (DeleteAccount(rbis.GetBank(rbi,bid),userName))
                 {
-                    b.RemoveUser(rbis,rbi,bid,userName,User.TypesOfUser.Customer.ToString());
+                    b.RemoveUser(rbis,rbi,bid,userName,TypeOfUsers.Customer.ToString());
                     return true;
                 }
                 return false;
@@ -55,8 +50,8 @@ namespace BankApplication.Services
                 }
             }
             foreach (var i in b.Users)
-            {
-                if (i.UserName == oldName && i.UserType==User.TypesOfUser.Customer.ToString())
+            {   
+                if (i.UserName == oldName && i.UserType==TypeOfUsers.Customer.ToString())
                 {
                     i.UserName = newName;
                 }
@@ -66,11 +61,11 @@ namespace BankApplication.Services
         {
             Bank bank = rbis.GetBank(rbi, bid);
             IBankService b = new BankService();
-            if (b.CheckUser(rbis,rbi,bid,u,User.TypesOfUser.Customer.ToString()))
+            if (b.CheckUser(rbis,rbi,bid,u,TypeOfUsers.Customer.ToString()))
             {
                 foreach (var i in bank.Users)
                 {
-                    if (i.UserName == u && i.UserType == User.TypesOfUser.Customer.ToString())
+                    if (i.UserName == u && i.UserType == TypeOfUsers.Customer.ToString())
                     {
                         i.Password = p;
                     }
@@ -107,7 +102,7 @@ namespace BankApplication.Services
             IBankService bs = new BankService();
             IAccountService a = new AccountService();
             Account a1 = bs.GetAccount(rbis,rbi, bid, aid);
-            TransactionModel t = a.GetTransaction(a1, transId);
+            AccountTransaction t = a.GetTransaction(a1, transId);
             float am;
             string aid2;
             string bid2;
@@ -125,8 +120,8 @@ namespace BankApplication.Services
             }
             a.AddMoney(a1,am);
             a.AddMoney(bs.GetAccount(rbis,rbi, bid2, aid2), (-1)*am);
-            a1.Transactions.Add(new TransactionModel(TransactionModel.TypeOfTransaction.Reverted.ToString(),am, transId));
-            bs.GetAccount(rbis,rbi, bid2, aid2).Transactions.Add(new TransactionModel(TransactionModel.TypeOfTransaction.Reverted.ToString(), -1*am, transId));
+            a1.Transactions.Add(new AccountTransaction(TypeOfTransaction.Reverted.ToString(),am, transId));
+            bs.GetAccount(rbis,rbi, bid2, aid2).Transactions.Add(new AccountTransaction(TypeOfTransaction.Reverted.ToString(), -1*am, transId));
         }
     }
 }

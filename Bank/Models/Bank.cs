@@ -1,4 +1,6 @@
-﻿namespace BankApplication.Models
+﻿using BankApplication.helper;
+
+namespace BankApplication.Models
 {
     public class Bank
     {
@@ -7,11 +9,11 @@
         public List<User> Users = new List<User>();
         public string BankId { get; set; }
         public string Name { get; set; }
-        public string DefaultCurrency { get; set; } = "INR";
-        public float RTGS { get; set; } = 0;
-        public float IMPS { get; set; } = 5;
-        public float ORTGS { get; set; } = 2;
-        public float OIMPS { get; set; } = 6;
+        public string DefaultCurrency { get; set; } = Constants.defaultCurrency;
+        public float RTGS { get; set; } = Constants.initialRTGS;
+        public float IMPS { get; set; } = Constants.initialIMPS;
+        public float ORTGS { get; set; } = Constants.initialORTGS;
+        public float OIMPS { get; set; } = Constants.initialOIMPS;
         public Bank(string s)
         {
             Name = s;

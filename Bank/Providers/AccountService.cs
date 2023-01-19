@@ -1,13 +1,7 @@
 ﻿using BankApplication.Contracts;
 using BankApplication.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
-namespace BankApplication.Services
+namespace BankApplication.Providers
 {
     public class AccountService:IAccountService
     {
@@ -15,7 +9,7 @@ namespace BankApplication.Services
         {
             a.Balance += amount;
         }
-        public bool CanRemoveMoney(Account a, float amount)
+        public bool CanDeductMoney(Account a, float amount)
         {
             if (a.Balance >= amount)
             {
@@ -24,7 +18,7 @@ namespace BankApplication.Services
             }
             return false;
         }
-        public TransactionModel GetTransaction(Account a,string tid)
+        public AccountTransaction GetTransaction(Account a,string tid)
         {
             foreach(var tx in a.Transactions)
             {

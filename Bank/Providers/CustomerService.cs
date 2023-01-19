@@ -1,15 +1,8 @@
 ﻿using BankApplication.Contracts;
 using BankApplication.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
-using System.Transactions;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using BankApplication.helper;
 
-namespace BankApplication.Services
+namespace BankApplication.Providers
 {
     public class CustomerService:ICustomerService
     {
@@ -24,7 +17,7 @@ namespace BankApplication.Services
                 Account acc = b.GetAccount(rbis,rbi, bid, aid);
                 a.AddMoney(acc,amount * rate);
                 string transactionId = "TXN"+ DateTime.Now.Microsecond.ToString();
-                acc.Transactions.Add(new TransactionModel(TransactionModel.TypeOfTransaction.Deposit.ToString(), amount * rate,transactionId));
+                acc.Transactions.Add(new AccountTransaction(TypeOfTransaction.Deposit.ToString(), amount * rate,transactionId));
                 return true;
             }
             return false;            
@@ -34,10 +27,10 @@ namespace BankApplication.Services
             IAccountService a = new AccountService();
             IBankService b = new BankService();
             Account acc = b.GetAccount(rbis,rbi,bid,aid);
-            if (a.CanRemoveMoney(acc,amount))
+            if (a.CanDeductMoney(acc,amount))
             {
                 string transactionId = "TXN" + DateTime.Now.Microsecond.ToString();
-                acc.Transactions.Add(new TransactionModel(TransactionModel.TypeOfTransaction.Withdrawl.ToString(), amount * (-1),transactionId));
+                acc.Transactions.Add(new AccountTransaction(TypeOfTransaction.Withdrawl.ToString(), amount * (-1),transactionId));
                 return true;
             }
             return false;
@@ -59,11 +52,11 @@ namespace BankApplication.Services
                 Account senderAccount = b.GetAccount(rbis,rbi, senderBankId, senderAccountId);
                 Account recieverAccount = b.GetAccount(rbis,rbi, recieverBankId, recieverAccountId);
                 IAccountService a = new AccountService();
-                if (a.CanRemoveMoney(senderAccount, senderAmount))
+                if (a.CanDeductMoney(senderAccount, senderAmount))
                 {
-                    senderAccount.Transactions.Add(new TransactionModel(TransactionModel.TypeOfTransaction.Transfer.ToString(), -1 * senderAmount, transactionId, recieverBankId: recieverBankId, recieverAccountId: recieverAccountId));
+                    senderAccount.Transactions.Add(new AccountTransaction(TypeOfTransaction.Transfer.ToString(), -1 * senderAmount, transactionId, recieverBankId: recieverBankId, recieverAccountId: recieverAccountId));
                     a.AddMoney(recieverAccount, reciverAmount);
-                    recieverAccount.Transactions.Add(new TransactionModel(TransactionModel.TypeOfTransaction.Transfer.ToString(), reciverAmount, transactionId, senderBankId: senderBankId, senderAccountID: senderAccountId));
+                    recieverAccount.Transactions.Add(new AccountTransaction(TypeOfTransaction.Transfer.ToString(), reciverAmount, transactionId, senderBankId: senderBankId, senderAccountID: senderAccountId));
                     return "Tranfer Successful";
                 }
                 else
